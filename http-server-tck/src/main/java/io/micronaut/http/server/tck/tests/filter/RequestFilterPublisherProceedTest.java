@@ -3,6 +3,7 @@ package io.micronaut.http.server.tck.tests.filter;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -11,12 +12,9 @@ import io.micronaut.http.tck.AssertionUtils;
 import io.micronaut.http.tck.HttpResponseAssertion;
 import io.micronaut.http.tck.TestScenario;
 import org.junit.jupiter.api.Test;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
-
 import java.io.IOException;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings({
         "java:S5960", // We're allowed assertions, as these are used in tests only
@@ -27,7 +25,7 @@ public class RequestFilterPublisherProceedTest {
     public static final String SPEC_NAME = "RequestFilterPublisherProceedTest";
 
     @Test
-    public void requestFilterProceedWithCompletableFuture() throws IOException {
+    public void requestFilterProceedWithPublisher() throws IOException {
         TestScenario.builder()
                 .specName(SPEC_NAME)
                 .request(HttpRequest.GET("/foobar").header("X-FOOBAR", "123"))
@@ -48,18 +46,21 @@ public class RequestFilterPublisherProceedTest {
     /*
     //tag::clazz[]
     @ServerFilter(ServerFilter.MATCH_ALL_PATTERN)
-    class CsrfFilter {
+    class FooBarFilter {
     //end::clazz[]
     */
     @Requires(property = "spec.name", value = SPEC_NAME)
     @ServerFilter(ServerFilter.MATCH_ALL_PATTERN)
     static class FooBarFilter {
+        private static final Mono<Optional<HttpResponse<?>>> PROCEED = Mono.just(Optional.empty());
+
     //tag::methods[]
         @RequestFilter
-        public Publisher<Optional<HttpResponse<?>>> filter(@NonNull HttpRequest<?> request) {
+        @Nullable
+        public Mono<Optional<HttpResponse<?>>> filter(@NonNull HttpRequest<?> request) {
             if (request.getHeaders().contains("X-FOOBAR")) {
                 // proceed
-                return Mono.just(Optional.empty());
+                return PROCEED;
             } else {
                 return Mono.just(Optional.of(HttpResponse.unauthorized()));
             }
