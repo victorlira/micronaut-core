@@ -12,6 +12,7 @@ import io.micronaut.http.tck.AssertionUtils;
 import io.micronaut.http.tck.HttpResponseAssertion;
 import io.micronaut.http.tck.TestScenario;
 import org.junit.jupiter.api.Test;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.util.Optional;
@@ -57,7 +58,7 @@ public class RequestFilterPublisherProceedTest {
     //tag::methods[]
         @RequestFilter
         @Nullable
-        public Mono<Optional<HttpResponse<?>>> filter(@NonNull HttpRequest<?> request) {
+        public Publisher<Optional<HttpResponse<?>>> filter(@NonNull HttpRequest<?> request) {
             if (request.getHeaders().contains("X-FOOBAR")) {
                 // proceed
                 return PROCEED;
