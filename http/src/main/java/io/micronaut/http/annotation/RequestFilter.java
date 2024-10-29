@@ -18,6 +18,7 @@ package io.micronaut.http.annotation;
 import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.context.annotation.Executable;
 import io.micronaut.core.annotation.EntryPoint;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpRequest;
@@ -68,10 +69,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  *     <li>An updated {@link HttpRequest}</li>
  *     <li>A {@link HttpResponse} to skip execution of the request</li>
  *     <li>A {@link Publisher} (or other reactive type) that produces any of these return types, to
- *     delay further execution.
- *     If the return type is {@code Publisher<java.util.Optional<HttpResponse>>},
- *     To immediately continue execution, the method should return a publisher
- *     with an empty {@code Optional} - for example, with {@code Mono.just(Optional.empty())}.</li>
+ *     delay further execution. Suppose you must write a filter that proceeds with the request in some scenarios. You can use {@code Publisher<Optional<HttpResponse<?>>>} as the return type. Then, to proceed with the request, return  {@code Publishers.just(Optional.empty()}.</li>
  * </ul>
  *
  * @since 4.0.0
