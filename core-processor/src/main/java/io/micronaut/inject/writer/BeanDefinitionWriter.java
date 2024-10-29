@@ -1195,10 +1195,6 @@ public class BeanDefinitionWriter extends AbstractClassFileWriter implements Bea
             isEnabledBeanMethod2.endMethod();
         }
 
-        for (GeneratorAdapter method : loadTypeMethods.values()) {
-            method.visitMaxs(3, 1);
-            method.visitEnd();
-        }
         classWriter.visitEnd();
         this.beanFinalized = true;
     }

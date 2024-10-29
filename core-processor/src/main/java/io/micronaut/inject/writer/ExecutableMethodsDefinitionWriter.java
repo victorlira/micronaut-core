@@ -249,11 +249,6 @@ public class ExecutableMethodsDefinitionWriter extends AbstractClassFileWriter i
             buildGetMethod(classWriter);
         }
 
-        for (GeneratorAdapter method : loadTypeMethods.values()) {
-            method.visitMaxs(3, 1);
-            method.visitEnd();
-        }
-
         classWriter.visitEnd();
     }
 

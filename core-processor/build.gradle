@@ -13,6 +13,7 @@ dependencies {
         exclude group:'com.google.guava', module:'guava'
     }
     implementation project(":core-reactive")
+    api "io.micronaut.sourcegen:micronaut-sourcegen-bytecode-writer:1.4.900-SNAPSHOT"
 
     compileOnly libs.managed.kotlin.stdlib.jdk8
 }

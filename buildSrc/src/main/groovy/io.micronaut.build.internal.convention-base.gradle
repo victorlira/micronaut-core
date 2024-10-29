@@ -12,6 +12,7 @@ micronautBuild {
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 configurations.all {

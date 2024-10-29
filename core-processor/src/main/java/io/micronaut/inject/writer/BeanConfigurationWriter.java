@@ -93,10 +93,6 @@ public class BeanConfigurationWriter extends AbstractAnnotationMetadataWriter {
         } catch (NoSuchMethodException e) {
             throw new ClassGenerationException("Error generating configuration class. Incompatible JVM or Micronaut version?: " + e.getMessage(), e);
         }
-        for (GeneratorAdapter method : loadTypeMethods.values()) {
-            method.visitMaxs(3, 1);
-            method.visitEnd();
-        }
 
         return classWriter;
     }

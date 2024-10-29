@@ -77,11 +77,6 @@ final class GraalReflectionMetadataWriter extends AbstractAnnotationMetadataWrit
         writeConstructor(classWriter);
         writeGetAnnotationMetadataMethod(classWriter);
 
-        for (GeneratorAdapter method : loadTypeMethods.values()) {
-            method.visitMaxs(3, 1);
-            method.visitEnd();
-        }
-
         return classWriter;
     }
 

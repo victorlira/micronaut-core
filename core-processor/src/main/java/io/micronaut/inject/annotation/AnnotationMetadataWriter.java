@@ -32,9 +32,14 @@ import io.micronaut.inject.writer.AbstractAnnotationMetadataWriter;
 import io.micronaut.inject.writer.AbstractClassFileWriter;
 import io.micronaut.inject.writer.ClassGenerationException;
 import io.micronaut.inject.writer.ClassWriterOutputVisitor;
+import io.micronaut.sourcegen.ByteCodeWriter;
+import io.micronaut.sourcegen.model.ClassTypeDef;
+import io.micronaut.sourcegen.model.ExpressionDef;
+import io.micronaut.sourcegen.model.MethodDef;
+import io.micronaut.sourcegen.model.StatementDef;
+import io.micronaut.sourcegen.model.TypeDef;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
@@ -145,6 +150,8 @@ public class AnnotationMetadataWriter extends AbstractClassFileWriter {
             AbstractEvaluatedExpression.class,
             Object.class
         ));
+
+    private static final ByteCodeWriter BYTE_CODE_GENERATOR = new ByteCodeWriter();
 
     private static final String LOAD_CLASS_PREFIX = "$micronaut_load_class_value_";
 
@@ -534,10 +541,7 @@ public class AnnotationMetadataWriter extends AbstractClassFileWriter {
         if (writeAnnotationDefaults) {
             writeAnnotationDefaults(annotationMetadata, classWriter, owningType, defaultsStorage, loadTypeMethods);
         }
-        for (GeneratorAdapter adapter : loadTypeMethods.values()) {
-            adapter.visitMaxs(3, 1);
-            adapter.visitEnd();
-        }
+
         classWriter.visitEnd();
         return classWriter;
     }
@@ -761,24 +765,13 @@ public class AnnotationMetadataWriter extends AbstractClassFileWriter {
             ClassVisitor declaringClassWriter,
             GeneratorAdapter methodVisitor,
             Map<String, GeneratorAdapter> loadTypeMethods,
-            AnnotationClassValue acv) {
+            AnnotationClassValue<?> acv) {
         final String typeName = acv.getName();
         final String desc = getMethodDescriptor(AnnotationClassValue.class, Collections.emptyList());
+
         final GeneratorAdapter loadTypeGeneratorMethod = loadTypeMethods.computeIfAbsent(typeName, type -> {
+
             final String methodName = LOAD_CLASS_PREFIX + loadTypeMethods.size();
-            final GeneratorAdapter loadTypeGenerator = new GeneratorAdapter(declaringClassWriter.visitMethod(
-                    ACC_STATIC | ACC_SYNTHETIC,
-                    methodName,
-                    desc,
-                    null,
-                    null
-
-            ), ACC_STATIC | ACC_SYNTHETIC, methodName, desc);
-
-            loadTypeGenerator.visitCode();
-            Label tryStart = new Label();
-            Label tryEnd = new Label();
-            Label exceptionHandler = new Label();
 
             // This logic will generate a method such as the following, allowing non-dynamic classloading:
             //
@@ -790,25 +783,20 @@ public class AnnotationMetadataWriter extends AbstractClassFileWriter {
             //     }
             // }
 
-            loadTypeGenerator.visitTryCatchBlock(tryStart, tryEnd, exceptionHandler, Type.getInternalName(Throwable.class));
-            loadTypeGenerator.visitLabel(tryStart);
-            loadTypeGenerator.visitTypeInsn(NEW, TYPE_ANNOTATION_CLASS_VALUE.getInternalName());
-            loadTypeGenerator.visitInsn(DUP);
-            loadTypeGenerator.push(getTypeReferenceForName(typeName));
-            loadTypeGenerator.invokeConstructor(TYPE_ANNOTATION_CLASS_VALUE, CONSTRUCTOR_CLASS_VALUE_WITH_CLASS);
-            loadTypeGenerator.visitLabel(tryEnd);
-            loadTypeGenerator.returnValue();
-            loadTypeGenerator.visitLabel(exceptionHandler);
-            loadTypeGenerator.visitFrame(F_NEW, 0, new Object[]{}, 1, new Object[]{"java/lang/Throwable"});
-            // Try load the class
+            MethodDef methodDef = MethodDef.builder(methodName)
+                .returns(AnnotationClassValue.class)
+                .buildStatic(methodParameters -> StatementDef.doTry(
+                    ClassTypeDef.of(AnnotationClassValue.class).instantiate(
+                        ExpressionDef.constant(TypeDef.of(typeName))
+                    ).returning()
+                ).doCatch(Throwable.class, exceptionVar -> ClassTypeDef.of(AnnotationClassValue.class).instantiate(
+                    ExpressionDef.constant(typeName)
+                ).returning()));
 
-            // fallback to return a class value that is just a string
-            loadTypeGenerator.visitVarInsn(ASTORE, 0);
-            loadTypeGenerator.visitTypeInsn(NEW, TYPE_ANNOTATION_CLASS_VALUE.getInternalName());
-            loadTypeGenerator.visitInsn(DUP);
-            loadTypeGenerator.push(typeName);
-            loadTypeGenerator.invokeConstructor(TYPE_ANNOTATION_CLASS_VALUE, CONSTRUCTOR_CLASS_VALUE);
-            loadTypeGenerator.returnValue();
+            final GeneratorAdapter loadTypeGenerator = new GeneratorAdapter(null, ACC_STATIC | ACC_SYNTHETIC, methodName, desc);
+
+            BYTE_CODE_GENERATOR.writeMethod(declaringClassWriter, null, methodDef);
+
             return loadTypeGenerator;
         });
 

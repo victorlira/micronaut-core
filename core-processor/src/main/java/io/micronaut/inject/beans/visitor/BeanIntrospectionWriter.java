@@ -752,11 +752,6 @@ final class BeanIntrospectionWriter extends AbstractClassFileWriter {
 
         writeBooleanMethod(classWriter, "hasBuilder", hasBuilder);
 
-        for (GeneratorAdapter method : loadTypeMethods.values()) {
-            method.visitMaxs(3, 1);
-            method.visitEnd();
-        }
-
         classWriter.visitEnd();
 
         try (OutputStream outputStream = classWriterOutputVisitor.visitClass(introspectionName, getOriginatingElements())) {
