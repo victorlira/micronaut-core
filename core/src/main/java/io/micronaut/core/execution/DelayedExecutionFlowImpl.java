@@ -36,6 +36,8 @@ final class DelayedExecutionFlowImpl<T> implements DelayedExecutionFlow<T> {
      * The tail of the linked list of steps in this flow.
      */
     private Step tail = head;
+    private Runnable onCancel;
+    private volatile boolean cancelled;
 
     /**
      * Perform the given step with the given item. Continue on until there is either no more steps,
@@ -132,6 +134,34 @@ final class DelayedExecutionFlowImpl<T> implements DelayedExecutionFlow<T> {
             return tailOutput.tryComplete();
         } else {
             return null;
+        }
+    }
+
+    @Override
+    public boolean isCancelled() {
+        return cancelled;
+    }
+
+    @Override
+    public void cancel() {
+        next(new Cancel());
+        cancelled = true;
+        Runnable hook = this.onCancel;
+        if (hook != null) {
+            hook.run();
+        }
+    }
+
+    @Override
+    public void onCancel(Runnable hook) {
+        Runnable prev = this.onCancel;
+        if (prev != null) {
+            this.onCancel = () -> {
+                prev.run();
+                hook.run();
+            };
+        } else {
+            this.onCancel = hook;
         }
     }
 
@@ -332,6 +362,15 @@ final class DelayedExecutionFlowImpl<T> implements DelayedExecutionFlow<T> {
                 LOG.error("Failed to execute onComplete", e);
             }
             return executionFlow;
+        }
+    }
+
+    private static final class Cancel<E> extends Step<E, E> {
+
+        @Override
+        ExecutionFlow<E> apply(ExecutionFlow<E> input) {
+            input.cancel();
+            return ExecutionFlow.error(new Exception("Cancelled"));
         }
     }
 }
