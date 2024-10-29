@@ -87,6 +87,11 @@ final class DelayedExecutionFlowImpl<T> implements DelayedExecutionFlow<T> {
     @SuppressWarnings("unchecked")
     private <R> ExecutionFlow<R> next(Step next) {
         Step oldTail = tail;
+        if (oldTail instanceof DelayedExecutionFlowImpl.Cancel<?>) {
+            // because the Cancel step can only cancel flows upstream of it, we can't allow adding
+            // further downstream steps.
+            throw new IllegalStateException("Cannot add more ExecutionFlow steps after cancellation");
+        }
         tail = next;
         ExecutionFlow output = oldTail.atomicSetNext(next);
         if (output != null) {
@@ -165,7 +170,7 @@ final class DelayedExecutionFlowImpl<T> implements DelayedExecutionFlow<T> {
         }
     }
 
-    private abstract static class Step<I, O> {
+    private abstract static sealed class Step<I, O> {
         /**
          * The next step to take, or {@code null} if there is no next step yet.
          */
@@ -366,11 +371,12 @@ final class DelayedExecutionFlowImpl<T> implements DelayedExecutionFlow<T> {
     }
 
     private static final class Cancel<E> extends Step<E, E> {
+        private static final ExecutionFlow ERR = ExecutionFlow.error(new AssertionError("Should never be hit, no further steps are allowed after cancel"));
 
         @Override
         ExecutionFlow<E> apply(ExecutionFlow<E> input) {
             input.cancel();
-            return ExecutionFlow.error(new Exception("Cancelled"));
+            return ERR;
         }
     }
 }
