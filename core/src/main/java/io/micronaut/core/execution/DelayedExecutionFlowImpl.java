@@ -149,6 +149,9 @@ final class DelayedExecutionFlowImpl<T> implements DelayedExecutionFlow<T> {
 
     @Override
     public void cancel() {
+        if (cancelled) {
+            return;
+        }
         next(new Cancel());
         cancelled = true;
         Runnable hook = this.onCancel;
