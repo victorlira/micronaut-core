@@ -71,7 +71,6 @@ public interface HttpResponse<B> extends HttpMessage<B> {
      * @return The HTTP status
      * @deprecated To support custom status codes. Use {@link #code()} instead of {@link #status()} and {@link HttpStatus#getCode()}  and {@link #reason()} instead of {@link #status()} and {@link HttpStatus#getReason()}
      */
-    @Deprecated(since = "4.7.2")
     default HttpStatus status() {
         return getStatus();
     }
