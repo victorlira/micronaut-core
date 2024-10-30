@@ -83,7 +83,7 @@ public class HttpClientResponseException extends HttpClientException implements 
 
     /**
      * @return The {@link io.micronaut.http.HttpStatus} returned
-     * @deprecated To support custom status codes. Use {@link #code()} instead of {@link #getStatus()} and {@link HttpStatus#getCode()}  and {@link #reason()} instead of {@link #getStatus()} and {@link HttpStatus#getReason()}
+     * To support custom status codes. Use {@link #code()} instead of {@link #getStatus()} and {@link HttpStatus#getCode()}  and {@link #reason()} instead of {@link #getStatus()} and {@link HttpStatus#getReason()}.
      */
     @Deprecated(since = "4.7.2")
     public HttpStatus getStatus() {
