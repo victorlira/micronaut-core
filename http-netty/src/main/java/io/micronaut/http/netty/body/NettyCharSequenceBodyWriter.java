@@ -22,7 +22,6 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.type.MutableHeaders;
 import io.micronaut.http.ByteBodyHttpResponse;
 import io.micronaut.http.ByteBodyHttpResponseWrapper;
-import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpHeaders;
@@ -59,7 +58,7 @@ public final class NettyCharSequenceBodyWriter implements ResponseBodyWriter<Cha
         MutableHttpHeaders headers = outgoingResponse.getHeaders();
         ByteBuf byteBuf = ByteBufUtil.encodeString(ByteBufAllocator.DEFAULT, CharBuffer.wrap(object), MessageBodyWriter.getCharset(mediaType, headers));
         NettyHttpHeaders nettyHttpHeaders = (NettyHttpHeaders) headers;
-        if (!nettyHttpHeaders.contains(HttpHeaders.CONTENT_TYPE)) {
+        if (!nettyHttpHeaders.contains(HttpHeaderNames.CONTENT_TYPE)) {
             nettyHttpHeaders.set(HttpHeaderNames.CONTENT_TYPE, mediaType);
         }
         return ByteBodyHttpResponseWrapper.wrap(outgoingResponse, new AvailableNettyByteBody(byteBuf));
