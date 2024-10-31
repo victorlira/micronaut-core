@@ -113,9 +113,11 @@ public final class ServerRequestContext {
      * @param context The reactor context view
      * @param <T> The body type
      * @return The request context if it is present
+     * @since 4.8.0
      */
     @SuppressWarnings("unchecked")
-    public static <T> Optional<HttpRequest<T>> currentRequest(ContextView context) {
+    @NonNull
+    public static <T> Optional<HttpRequest<T>> currentRequest(@NonNull ContextView context) {
         return ReactorPropagation.findPropagatedContext(context)
             .flatMap(ctx -> ctx.find(ServerHttpRequestContext.class))
             .map(e -> (HttpRequest<T>) e.httpRequest())
