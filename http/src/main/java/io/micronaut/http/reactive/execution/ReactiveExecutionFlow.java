@@ -18,6 +18,7 @@ package io.micronaut.http.reactive.execution;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.execution.ExecutionFlow;
+import io.micronaut.core.propagation.PropagatedContext;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
@@ -47,6 +48,22 @@ public sealed interface ReactiveExecutionFlow<T> extends ExecutionFlow<T> permit
     @NonNull
     static <K> ReactiveExecutionFlow<K> fromPublisher(@NonNull Publisher<K> publisher) {
         return (ReactiveExecutionFlow<K>) new ReactorExecutionFlowImpl(publisher);
+    }
+
+    /**
+     * Creates a new reactive flow from a publisher. This method eagerly subscribes to the
+     * publisher, and may return an immediate {@link ExecutionFlow} if possible.
+     *
+     * @param publisher         The publisher
+     * @param propagatedContext A context to propagate in the reactor context and as a thread-local
+     *                          in the subscribe operation.
+     * @param <K>       The flow value type
+     * @return a new flow
+     * @since 4.8.0
+     */
+    @NonNull
+    static <K> ExecutionFlow<K> fromPublisherEager(@NonNull Publisher<K> publisher, @NonNull PropagatedContext propagatedContext) {
+        return ReactorExecutionFlowImpl.defuse(publisher, propagatedContext);
     }
 
     /**
@@ -90,5 +107,9 @@ public sealed interface ReactiveExecutionFlow<T> extends ExecutionFlow<T> permit
 
     static <K> Publisher<K> toPublisher(Supplier<ExecutionFlow<K>> flowSupplier) {
         return (Publisher<K>) ReactorExecutionFlowImpl.toMono(flowSupplier);
+    }
+
+    static <K> Publisher<K> toPublisher(ExecutionFlow<K> flow) {
+        return (Publisher<K>) ReactorExecutionFlowImpl.toMono(flow);
     }
 }
