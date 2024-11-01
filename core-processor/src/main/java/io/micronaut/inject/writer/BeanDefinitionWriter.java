@@ -633,7 +633,7 @@ public class BeanDefinitionWriter extends AbstractClassFileWriter implements Bea
     private final List<MethodVisitData> allMethodVisits = new ArrayList<>(2);
     private final Map<Type, List<AnnotationVisitData>> annotationInjectionPoints = new LinkedHashMap<>(2);
     private final Map<String, Boolean> isLifeCycleCache = new HashMap<>(2);
-    private ExecutableMethodsDefinitionWriter executableMethodsDefinitionWriter;
+    private ExecutableMethodsDefinitionWriter2 executableMethodsDefinitionWriter;
 
     private Object constructor; // MethodElement or FieldElement
     private boolean disabled = false;
@@ -793,7 +793,7 @@ public class BeanDefinitionWriter extends AbstractClassFileWriter implements Bea
      * @return An instance of {@link ExecutableMethodsDefinitionWriter}
      */
     @Nullable
-    public ExecutableMethodsDefinitionWriter getExecutableMethodsWriter() {
+    public ExecutableMethodsDefinitionWriter2 getExecutableMethodsWriter() {
         return executableMethodsDefinitionWriter;
     }
 
@@ -1891,7 +1891,7 @@ public class BeanDefinitionWriter extends AbstractClassFileWriter implements Bea
                                      String interceptedProxyBridgeMethodName) {
 
         if (executableMethodsDefinitionWriter == null) {
-            executableMethodsDefinitionWriter = new ExecutableMethodsDefinitionWriter(
+            executableMethodsDefinitionWriter = new ExecutableMethodsDefinitionWriter2(
                 visitorContext,
                 evaluatedExpressionProcessor,
                 annotationMetadata,

@@ -61,6 +61,7 @@ import io.micronaut.inject.writer.AbstractClassFileWriter;
 import io.micronaut.inject.writer.BeanDefinitionWriter;
 import io.micronaut.inject.writer.ClassWriterOutputVisitor;
 import io.micronaut.inject.writer.ExecutableMethodsDefinitionWriter;
+import io.micronaut.inject.writer.ExecutableMethodsDefinitionWriter2;
 import io.micronaut.inject.writer.OriginatingElements;
 import io.micronaut.inject.writer.ProxyingBeanDefinitionVisitor;
 import io.micronaut.inject.writer.WriterUtils;
@@ -1053,7 +1054,7 @@ public class AopProxyWriter extends AbstractClassFileWriter implements ProxyingB
             }
         } else if (!proxiedMethods.isEmpty()) {
             BeanDefinitionWriter beanDefinitionWriter = parentWriter == null ? proxyBeanDefinitionWriter : parentWriter;
-            ExecutableMethodsDefinitionWriter executableMethodsDefinitionWriter = beanDefinitionWriter.getExecutableMethodsWriter();
+            ExecutableMethodsDefinitionWriter2 executableMethodsDefinitionWriter = beanDefinitionWriter.getExecutableMethodsWriter();
             Type executableMethodsDefinitionType = executableMethodsDefinitionWriter.getClassType();
             proxyConstructorGenerator.newInstance(executableMethodsDefinitionType);
             proxyConstructorGenerator.dup();
