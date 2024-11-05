@@ -10,11 +10,13 @@ import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.annotation.AnnotationMetadataReference;
 import io.micronaut.inject.annotation.AnnotationMetadataStatement;
 import io.micronaut.inject.annotation.MutableAnnotationMetadata;
+import io.micronaut.inject.ast.ArrayableClassElement;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.GenericPlaceholderElement;
 import io.micronaut.inject.ast.KotlinParameterElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.ast.TypedElement;
+import io.micronaut.inject.ast.WildcardElement;
 import io.micronaut.sourcegen.model.ClassTypeDef;
 import io.micronaut.sourcegen.model.ExpressionDef;
 import io.micronaut.sourcegen.model.MethodDef;
@@ -193,6 +195,7 @@ public class ArgumentGenUtils {
         Map<String, ClassElement> typeArguments,
         Map<String, MethodDef> loadTypeMethods) {
         annotationMetadata = MutableAnnotationMetadata.of(annotationMetadata);
+        ExpressionDef.Constant argumentTypeConstant = ExpressionDef.constant(TypeDef.of(resolveArgument(argumentType)));
 
         boolean hasAnnotations = !annotationMetadata.isEmpty();
         boolean hasTypeArguments = typeArguments != null && !typeArguments.isEmpty();
@@ -211,7 +214,7 @@ public class ArgumentGenUtils {
         List<ExpressionDef> values = new ArrayList<>();
 
         // 1st argument: The type
-        values.add(ExpressionDef.constant(TypeDef.of(argumentType)));
+        values.add(argumentTypeConstant);
         // 2nd argument: The argument name
         values.add(ExpressionDef.constant(argumentName));
 
@@ -268,6 +271,39 @@ public class ArgumentGenUtils {
                 values
             );
         }
+    }
+
+    private static TypedElement resolveArgument(TypedElement argumentType) {
+        if (argumentType instanceof GenericPlaceholderElement placeholderElement) {
+            ClassElement resolved = placeholderElement.getResolved().orElse(
+                placeholderElement.getBounds().get(0)
+            );
+            TypedElement typedElement = resolveArgument(
+                resolved
+            );
+            if (argumentType.isArray()) {
+                if (typedElement instanceof ArrayableClassElement arrayableClassElement) {
+                    return arrayableClassElement.withArrayDimensions(argumentType.getArrayDimensions());
+                }
+                return typedElement;
+            }
+            return typedElement;
+        }
+        if (argumentType instanceof WildcardElement wildcardElement) {
+            return resolveArgument(
+                wildcardElement.getResolved().orElseGet(() -> {
+                        if (!wildcardElement.getLowerBounds().isEmpty()) {
+                            return wildcardElement.getLowerBounds().get(0);
+                        }
+                        if (!wildcardElement.getUpperBounds().isEmpty()) {
+                            return wildcardElement.getUpperBounds().get(0);
+                        }
+                        return ClassElement.of(Object.class);
+                    }
+                )
+            );
+        }
+        return argumentType;
     }
 
     /**
@@ -353,6 +389,7 @@ public class ArgumentGenUtils {
         Map<String, ClassElement> typeArguments,
         Set<Object> visitedTypes,
         Map<String, MethodDef> loadTypeMethods) {
+        ExpressionDef.Constant argumentTypeConstant = ExpressionDef.constant(TypeDef.of(resolveArgument(argumentType)));
 
         List<ExpressionDef> values = new ArrayList<>();
 
@@ -360,11 +397,6 @@ public class ArgumentGenUtils {
             // Persist resolved placeholder for backward compatibility
             argumentType = placeholderElement.getResolved().orElse(argumentType);
         }
-
-        // 1st argument: the type
-        values.add(ExpressionDef.constant(TypeDef.of(argumentType)));
-        // 2nd argument: the name
-        values.add(ExpressionDef.constant(argumentName));
 
         // Persist only type annotations added to the type argument
         AnnotationMetadata annotationMetadata = MutableAnnotationMetadata.of(argumentType.getTypeAnnotationMetadata());
@@ -382,6 +414,12 @@ public class ArgumentGenUtils {
         }
 
         boolean typeVariable = argumentType.isTypeVariable();
+
+        // 1st argument: the type
+        values.add(argumentTypeConstant);
+        // 2nd argument: the name
+        values.add(ExpressionDef.constant(argumentName));
+
 
         if (isRecursiveType || !typeVariable && !hasAnnotationMetadata && typeArguments.isEmpty()) {
             // Argument.create( .. )
@@ -436,7 +474,7 @@ public class ArgumentGenUtils {
      * @param argumentType The argument type
      */
     private static ExpressionDef buildArgument(String argumentName, ClassElement argumentType) {
-        TypeDef argumentTypeDef = TypeDef.of(argumentType);
+        ExpressionDef.Constant argumentTypeConstant = ExpressionDef.constant(TypeDef.of(resolveArgument(argumentType)));
 
         if (argumentType instanceof GenericPlaceholderElement placeholderElement) {
             // Persist resolved placeholder for backward compatibility
@@ -454,7 +492,7 @@ public class ArgumentGenUtils {
                     METHOD_GENERIC_PLACEHOLDER_SIMPLE,
 
                     // 1st argument: the type
-                    ExpressionDef.constant(argumentTypeDef),
+                    argumentTypeConstant,
                     // 2nd argument: the name
                     ExpressionDef.constant(argumentName),
                     // 3nd argument: the variable
@@ -465,7 +503,7 @@ public class ArgumentGenUtils {
             return TYPE_ARGUMENT.invokeStatic(
                 METHOD_CREATE_TYPE_VARIABLE_SIMPLE,
                 // 1st argument: the type
-                ExpressionDef.constant(argumentTypeDef),
+                argumentTypeConstant,
                 // 2nd argument: the name
                 ExpressionDef.constant(argumentName)
             );
@@ -474,7 +512,7 @@ public class ArgumentGenUtils {
         return TYPE_ARGUMENT.invokeStatic(
             METHOD_CREATE_ARGUMENT_SIMPLE,
             // 1st argument: the type
-            ExpressionDef.constant(argumentTypeDef),
+            argumentTypeConstant,
             // 2nd argument: the name
             ExpressionDef.constant(argumentName)
         );
