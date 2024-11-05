@@ -4,6 +4,7 @@ import io.micronaut.core.beans.BeanIntrospection;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.util.UUID;
 
 public class LombokIntrospectedBuilderTest {
@@ -30,8 +31,18 @@ public class LombokIntrospectedBuilderTest {
 
         Assertions.assertEquals(id, simpleEntity.getId());
 
-        BeanIntrospection<SimpleEntity.CompartmentCreationTimeIndexPrefix> introspection =
+        BeanIntrospection<SimpleEntity.CompartmentCreationTimeIndexPrefix> innerClassIntrospection =
             BeanIntrospection.getIntrospection(SimpleEntity.CompartmentCreationTimeIndexPrefix.class);
-        Assertions.assertNotNull(introspection);
+        Assertions.assertNotNull(innerClassIntrospection);
+
+        BeanIntrospection.Builder<SimpleEntity.CompartmentCreationTimeIndexPrefix> innerClassBuilder =
+            innerClassIntrospection.builder();
+
+        long current = Instant.now().toEpochMilli();
+        SimpleEntity.CompartmentCreationTimeIndexPrefix innerClassEntity =
+            innerClassBuilder.with("compartmentId", "c1").with("timeCreated", current).build();
+
+        Assertions.assertEquals("c1", innerClassEntity.getCompartmentId());
+        Assertions.assertEquals(current, innerClassEntity.getTimeCreated());
     }
 }
