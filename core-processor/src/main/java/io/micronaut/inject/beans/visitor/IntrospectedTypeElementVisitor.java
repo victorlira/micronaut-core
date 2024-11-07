@@ -84,21 +84,6 @@ public class IntrospectedTypeElementVisitor implements TypeElementVisitor<Object
                 processIntrospected(element, context, introspected);
             }
         }
-
-        List<ClassElement> innerIntrospections = element.getEnclosedElements(
-            ElementQuery.ALL_INNER_CLASSES
-                .onlyStatic()
-                .onlyConcrete()
-                .onlyAccessible(element)
-                .annotated(annotationMetadata -> annotationMetadata.hasDeclaredStereotype(Introspected.class))
-        );
-
-        for (ClassElement innerIntrospected : innerIntrospections) {
-            final AnnotationValue<Introspected> introspected = innerIntrospected.getAnnotation(Introspected.class);
-            if (introspected != null && !writers.containsKey(innerIntrospected.getName())) {
-                processIntrospected(innerIntrospected, context, introspected);
-            }
-        }
     }
 
     private boolean isIntrospected(VisitorContext context, ClassElement c) {
