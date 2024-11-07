@@ -20,7 +20,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.async.publisher.Publishers;
-import io.micronaut.core.attr.AttributeHolder;
 import io.micronaut.core.bind.ArgumentBinder;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionService;
@@ -64,6 +63,7 @@ import io.micronaut.http.server.HttpServerConfiguration;
 import io.micronaut.http.server.netty.handler.Http2ServerHandler;
 import io.micronaut.http.server.netty.multipart.NettyCompletedFileUpload;
 import io.micronaut.web.router.DefaultUriRouteMatch;
+import io.micronaut.web.router.RouteAttributes;
 import io.micronaut.web.router.RouteMatch;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -227,7 +227,7 @@ public class NettyHttpRequest<T> extends AbstractNettyHttpRequest<T> implements 
     public final FormRouteCompleter formRouteCompleter() {
         assert isFormOrMultipartData();
         if (formRouteCompleter == null) {
-            formRouteCompleter = new FormRouteCompleter((RouteMatch<?>) getAttribute(HttpAttributes.ROUTE_MATCH).get(), getChannelHandlerContext().channel().eventLoop());
+            formRouteCompleter = new FormRouteCompleter(RouteAttributes.getRouteMatch(this).get(), getChannelHandlerContext().channel().eventLoop());
         }
         return formRouteCompleter;
     }
@@ -386,7 +386,7 @@ public class NettyHttpRequest<T> extends AbstractNettyHttpRequest<T> implements 
      */
     @Internal
     public void release() {
-        Object routeMatchO = ((AttributeHolder) this).getAttribute(HttpAttributes.ROUTE_MATCH).orElse(null);
+        Object routeMatchO = RouteAttributes.getRouteMatch(this).orElse(null);
         // usually this is a DefaultUriRouteMatch, avoid scalability issues here
         RouteMatch<?> routeMatch = routeMatchO instanceof DefaultUriRouteMatch<?, ?> urm ? urm : (RouteMatch<?>) routeMatchO;
         if (routeMatch != null) {

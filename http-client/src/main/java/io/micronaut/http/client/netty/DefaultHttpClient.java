@@ -38,7 +38,7 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.ObjectUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.core.util.functional.ThrowingFunction;
-import io.micronaut.http.HttpAttributes;
+import io.micronaut.http.BasicHttpAttributes;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpResponseWrapper;
 import io.micronaut.http.HttpStatus;
@@ -57,6 +57,7 @@ import io.micronaut.http.body.InternalByteBody;
 import io.micronaut.http.body.MessageBodyHandlerRegistry;
 import io.micronaut.http.body.MessageBodyReader;
 import io.micronaut.http.client.BlockingHttpClient;
+import io.micronaut.http.client.ClientAttributes;
 import io.micronaut.http.client.DefaultHttpClientConfiguration;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.HttpClientConfiguration;
@@ -1508,8 +1509,8 @@ public class DefaultHttpClient implements
         MutableHttpRequest<?> request,
         BiFunction<MutableHttpRequest<?>, NettyClientByteBodyResponse, ? extends ExecutionFlow<? extends HttpResponse<?>>> readResponse
     ) {
-        if (informationalServiceId != null && request.getAttribute(HttpAttributes.SERVICE_ID).isEmpty()) {
-            request.setAttribute(HttpAttributes.SERVICE_ID, informationalServiceId);
+        if (informationalServiceId != null && BasicHttpAttributes.getServiceId(request).isEmpty()) {
+            ClientAttributes.setServiceId(request, informationalServiceId);
         }
 
         List<GenericHttpFilter> filters =

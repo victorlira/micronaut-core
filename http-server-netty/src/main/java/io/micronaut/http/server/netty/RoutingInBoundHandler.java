@@ -32,7 +32,6 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.type.MutableHeaders;
 import io.micronaut.http.ByteBodyHttpResponse;
 import io.micronaut.http.ByteBodyHttpResponseWrapper;
-import io.micronaut.http.HttpAttributes;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -63,6 +62,7 @@ import io.micronaut.http.server.netty.configuration.NettyHttpServerConfiguration
 import io.micronaut.http.server.netty.handler.OutboundAccess;
 import io.micronaut.http.server.netty.handler.RequestHandler;
 import io.micronaut.web.router.DefaultUrlRouteInfo;
+import io.micronaut.web.router.RouteAttributes;
 import io.micronaut.web.router.RouteInfo;
 import io.micronaut.web.router.resource.StaticResourceResolver;
 import io.netty.buffer.ByteBuf;
@@ -331,7 +331,7 @@ public final class RoutingInBoundHandler implements RequestHandler {
         Object body) {
         MutableHttpResponse<?> response = httpResponse.toMutableResponse();
         if (nettyRequest.getMethod() != HttpMethod.HEAD && body != null) {
-            Object routeInfoO = response.getAttribute(HttpAttributes.ROUTE_INFO).orElse(null);
+            Object routeInfoO = RouteAttributes.getRouteInfo(response).orElse(null);
             // usually this is a UriRouteInfo, avoid scalability issues here
             @SuppressWarnings("unchecked") final RouteInfo<Object> routeInfo = (RouteInfo<Object>) (routeInfoO instanceof DefaultUrlRouteInfo<?, ?> uri ? uri : (RouteInfo<?>) routeInfoO);
 
